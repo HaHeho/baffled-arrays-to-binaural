@@ -1,6 +1,16 @@
+# Exclude external resources, but pecific desired recources can be added with
+# `git add --force ...`
+resources/
+
+# Exclude generated plots
+plots/
+
 # JetBrains development environment, whereas the following was not so helpful
 # https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
 .idea
+
+# always include .gitignore in subdirectories
+!.gitignore
 
 ###############################################################################
 # From https://github.com/github/gitignore/blob/main/Global/MATLAB.gitignore
