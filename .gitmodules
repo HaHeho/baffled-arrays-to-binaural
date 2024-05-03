@@ -1,3 +1,6 @@
 [submodule "dependencies/SOFAtoolbox"]
 	path = dependencies/SOFAtoolbox
 	url = https://github.com/sofacoustics/SOFAtoolbox.git
+[submodule "dependencies/eMagLS"]
+	path = dependencies/eMagLS
+	url = https://github.com/thomasdeppisch/eMagLS.git
