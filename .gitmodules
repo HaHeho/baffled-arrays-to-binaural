@@ -1,0 +1,3 @@
+[submodule "dependencies/SOFAtoolbox"]
+	path = dependencies/SOFAtoolbox
+	url = https://github.com/sofacoustics/SOFAtoolbox.git
