@@ -1,6 +1,6 @@
 % Perform binaural rendering of SMA and EMA impulse response data sets
 % at a specified spherical harmonics order and with a desired HRTF set.
-% 
+%
 % Thereby, a reference binaural room impulse response data set (either
 % from a dummy head measurement or from a former high-resolution array
 % rendering) can be specified. The reference data is compared against the
@@ -14,10 +14,10 @@
 % $ git clone https://github.com/AppliedAcousticsChalmers/ambisonic-encoding.git
 %
 % requires eMagLS toolbox
-% $ git clone https://github.com/thomasdeppisch/eMagLS
+% $ git clone https://github.com/thomasdeppisch/eMagLS.git
 %
 % requires AKtools toolbox (run AKtoolsStart.m)
-% $ svn checkout https://svn.ak.tu-berlin.de/svn/AKtools --username aktools --password ak
+% $ git clone https://github.com/f-brinkmann/AKtools.git
 %
 % -------------------------------------------------------------------------
 %

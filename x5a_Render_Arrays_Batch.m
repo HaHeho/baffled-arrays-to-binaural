@@ -1,6 +1,5 @@
-% Consecutively perform an arbitrary number and combination of binaural 
-% renderings from microphone array impulse responses and varying parameter
-% sets.
+% Consecutively perform an arbitrary combination of binaural renderings 
+% from microphone array impulse responses and varying parameter sets.
 % 
 % -------------------------------------------------------------------------
 %

@@ -1,12 +1,12 @@
 % Compare arbitrary combinations of (rendered) binaural room impulse 
 % responses by plotting various resulting signal levels. This is helpful 
 % for the preparation of the rendered BRIRs for the perceptual comparison 
-% in a user study, where all stimul should ideally be loudness normalized.
+% in a user study, where all stimuli should ideally be loudness normalized.
 % 
 % -------------------------------------------------------------------------
 %
 % requires AKtools toolbox (run AKtoolsStart.m)
-% $ svn checkout https://svn.ak.tu-berlin.de/svn/AKtools --username aktools --password ak
+% $ git clone https://github.com/f-brinkmann/AKtools.git
 %
 % -------------------------------------------------------------------------
 %

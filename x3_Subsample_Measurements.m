@@ -1,14 +1,14 @@
 % Spatially subsample a high-resolution directional impulse response data 
 % set into a different (lower-resolution) sampling grid in the spherical 
 % harmonics domain. This is suitable for array and HRIR data sets.
-%
-% The script also performs a comparison of the subsampled data against a
-% reference set if available.
+% 
+% The script also compares the subsampled data against a measured reference 
+% set if available.
 % 
 % -------------------------------------------------------------------------
 %
 % requires AKtools toolbox (run AKtoolsStart.m)
-% $ svn checkout https://svn.ak.tu-berlin.de/svn/AKtools --username aktools --password ak
+% $ git clone https://github.com/f-brinkmann/AKtools.git
 %
 % requires Spherical-Harmonic-Transform toolbox
 % $ git clone https://github.com/polarch/Spherical-Harmonic-Transform.git

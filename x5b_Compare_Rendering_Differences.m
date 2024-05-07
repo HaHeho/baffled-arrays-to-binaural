@@ -1,13 +1,13 @@
 % Compare arbitrary combinations of (rendered) binaural room impulse 
-% responses by plotting various time domain and averaged frequency domain
-% reprensetations. This is helpful for the direct comparison of similar
-% rendering configurations and to validate the rendering method or detect
+% responses by plotting various time domain and averaged frequency domain 
+% representations. This is helpful for directly comparing similar rendering 
+% configurations and validating the rendering method or detecting 
 % potentially flawed data sets.
 % 
 % -------------------------------------------------------------------------
 %
 % requires AKtools toolbox (run AKtoolsStart.m)
-% $ svn checkout https://svn.ak.tu-berlin.de/svn/AKtools --username aktools --password ak
+% $ git clone https://github.com/f-brinkmann/AKtools.git
 %
 % requires `natsortfiles()` from
 % https://se.mathworks.com/matlabcentral/fileexchange/47434-natural-order-filename-sort

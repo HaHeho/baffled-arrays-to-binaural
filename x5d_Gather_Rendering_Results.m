@@ -1,11 +1,12 @@
-% Generate plots to compare specified combinations of rendered binaural
-% room impulse responses to a designated reference. These plots are
-% used in the publication text.
+% Generate plots to compare specified combinations of rendered binaural 
+% room impulse responses to a designated reference.
+%
+% The resulting plots are used in the publication manuscript.
 % 
 % -------------------------------------------------------------------------
 %
 % requires AKtools toolbox (run AKtoolsStart.m)
-% $ svn checkout https://svn.ak.tu-berlin.de/svn/AKtools --username aktools --password ak
+% $ git clone https://github.com/f-brinkmann/AKtools.git
 %
 % -------------------------------------------------------------------------
 %

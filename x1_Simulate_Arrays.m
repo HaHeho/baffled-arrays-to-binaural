@@ -1,17 +1,17 @@
-% Simulate a plane wave impinging from arbitrary direction on SMAs and EMAs
-% with a desired sampling grid in an ancehoic environemnt.
-% 
-% Such simulations are helpful to evaluate the rendering method and to
-% investigate the influence of different sampling grids and equalization
+% Simulate a plane wave impinging from an arbitrary direction on SMAs and 
+% EMAs with a desired sampling grid in an anechoic environment.
+%
+% Such simulations are helpful to evaluate the rendering method and to 
+% investigate the influence of different sampling grids and equalization 
 % methods on the rendered binaural signals.
 %
 % -------------------------------------------------------------------------
 %
 % requires Array Response Simulator toolbox
-% $ git clone https://github.com/polarch/Array-Response-Simulator
+% $ git clone https://github.com/polarch/Array-Response-Simulator.git
 % 
 % requires AKtools toolbox (run AKtoolsStart.m)
-% $ svn checkout https://svn.ak.tu-berlin.de/svn/AKtools --username aktools --password ak
+% $ git clone https://github.com/f-brinkmann/AKtools.git
 %
 %  -------------------------------------------------------------------------
 %

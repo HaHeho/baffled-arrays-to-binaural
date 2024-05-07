@@ -1,7 +1,10 @@
-% Perform convolution of (rendered) binaural room impulse responses with a
-% source audio signal. This is done for a specified selection of static
-% head orientations as well as continous rotation over all horizontal head
+% Perform convolution of (rendered) binaural room impulse responses with a 
+% source audio signal. This is done for a specified selection of static 
+% head orientations and a continuous rotation over all horizontal head 
 % orientations.
+%
+% The resulting auralizations are published as supplementary materials to 
+% the manuscript.
 %
 % -------------------------------------------------------------------------
 %

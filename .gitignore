@@ -1,4 +1,4 @@
-# Exclude external resources, but pecific desired recources can be added with
+# Exclude external resources, but specific desired files may be added with
 # `git add --force ...`
 resources/
 
