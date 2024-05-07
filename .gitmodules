@@ -4,3 +4,6 @@
 [submodule "dependencies/eMagLS"]
 	path = dependencies/eMagLS
 	url = https://github.com/thomasdeppisch/eMagLS.git
+[submodule "dependencies/AKtools"]
+	path = dependencies/AKtools
+	url = https://github.com/f-brinkmann/AKtools.git
