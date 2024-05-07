@@ -8,6 +8,10 @@
 % evaluate time domain and frequency domain differences individually at all 
 % rendered head orientations.
 %
+% The script contains references and functionality for XMA rendering,
+% which were left for consistency but should be obsolete for the DAGA
+% publication.
+%
 % -------------------------------------------------------------------------
 %
 % requires Ambisonic Encoding toolbox
@@ -56,7 +60,6 @@ end
 fprintf('Parsing configuration parameters ... ');
 global params
 if ~isfield(params, 'hrir_file')
-    [params.hrir_max_N, params.hrir_file] = deal(44, 'resources/HRIR_KEMAR/Kemar_HRTF_sofa_N44_adjusted.sofa'); % time adjusted
     [params.hrir_max_N, params.hrir_file] = deal(44, 'resources/HRIR_KU100/HRIR_L2702.sofa'); % KU100 for DAGA publication for compatibility to reference BRIRs
 end
 if ~isfield(params, 'sh_type')
@@ -68,8 +71,8 @@ if ~isfield(params, 'sh_with_weights')
     % params.sh_with_weights = false; % do not use qudrature weights for SH transformations (pseudo-inverse will be used)
 end
 if ~isfield(params, 'half_block_length')
-    % params.half_block_length = 4096; % in samples required minimum for SMA and EMA
-    params.half_block_length = 8192; % in samples, required minimum for XMA
+    params.half_block_length = 8192; % in samples
+    % params.half_block_length = 4096; % in samples, required minimum for SMA and EMA
 end
 if ~isfield(params, 'rf_reg_type')
     params.rf_reg_type = 'tikhonov';
@@ -80,10 +83,10 @@ if ~isfield(params, 'rf_lim_dB')
     params.rf_lim_dB = 18; % in dB, according to Ambisonics convention
 end
 if ~isfield(params, 'rf_len')
-    % params.rf_len = 1024; % in samples, recommended minimum for SMA
-    % params.rf_len = 2048; % in samples, recommended minimum for EMA
-    % params.rf_len = 4096; % in samples, to be sure that zero-padded filters are well defined (e.g. at SH2)
     params.rf_len = 8192; % in samples, for DAGA publication
+    % params.rf_len = 4096; % in samples, to be sure that zero-padded filters are well defined (e.g. at SH2)
+    % params.rf_len = 2048; % in samples, recommended minimum for EMA
+    % params.rf_len = 1024; % in samples, recommended minimum for SMA
 end
 if ~isfield(params, 'eq_type')
     params.eq_type = '';
@@ -101,15 +104,14 @@ if ~isfield(params, 'eq_magls_len')
     params.eq_magls_len = 512; % in samples
 end
 if ~isfield(params, 'eq_xma_len')
-    % params.eq_xma_len = 2048; % in samples, this is determined by Jens
-    params.eq_xma_len = 1024; % in samples, this is determined by Jens
+    params.eq_xma_len = 1024; % in samples, obsolete for the DAGA publication
 end
 if ~isfield(params, 'anec_simulation')
     params.anec_simulation = true;
     % params.anec_simulation = false;
 end
 if ~isfield(params, 'azim_align')
-    params.azim_align = false; % for DAGA publication
+    params.azim_align = false;
     % params.azim_align = true;
 end
 if ~isfield(params, 'azim_align_frac_sm')
