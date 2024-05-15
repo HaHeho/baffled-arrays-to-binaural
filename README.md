@@ -1,11 +1,37 @@
 # Binaural Rendering of Baffled Microphone Arrays
-This repository contains MATLAB code for the binaural rendering of spherical microphone arrays (**SMA**s) and equatorial microphone arrays (**EMA**s).
+This repository contains MATLAB code for the binaural rendering of spherical microphone arrays (**SMA**s), equatorial microphone arrays (**EMA**s), and non-spherical microphone arrays (**XMA**s).
 
-This version of the code was utilized in the manuscript
+This version of the code (release [**v2024.JAES**](https://github.com/HaHeho/baffled-arrays-to-binaural/releases/tag/v2024.JAES)) was utilized in the manuscript
+> TODO_CITATION
+> <br>
+> [[TODO_pdf]](TODO_PDF)
+> [[audio examples]](http://www.ta.chalmers.se/research/audio-technology-group/audio-examples/jaes-2024a/)
+> [[data]](https://zenodo.org/records/8206571)
+> [[experiment resources]](https://doi.org/10.5281/zenodo.10901444)
+* [README](https://github.com/HaHeho/baffled-arrays-to-binaural/tree/v2024.JAES)
+* [Download](https://github.com/HaHeho/baffled-arrays-to-binaural/releases/tag/v2024.JAES)
+* <details>
+  <summary>Clone</summary>
+  
+  ```
+  git clone --recurse-submodules https://github.com/HaHeho/baffled-arrays-to-binaural.git --branch v2024.JAES
+  ```
+</details>
+
+An older version of the code (release [**v2023.DAGA**](https://github.com/HaHeho/baffled-arrays-to-binaural/releases/tag/v2023.DAGA)) was utilized in the manuscript
 > H. Helmholz, T. Deppisch, and J. Ahrens, “End-to-End Magnitude Least Squares Binaural Rendering for Equatorial Microphone Arrays,” in Fortschritte der Akustik -- DAGA 2023, 2023, pp. 1679–1682.
 > <br>
 > [[pdf]](https://research.chalmers.se/publication/535525/file/535525_Fulltext.pdf)
 > [[audio examples]](http://www.ta.chalmers.se/research/audio-technology-group/audio-examples/daga-2023a/)
+* [README](https://github.com/HaHeho/baffled-arrays-to-binaural/tree/v2023.DAGA)
+* [Download](https://github.com/HaHeho/baffled-arrays-to-binaural/releases/tag/v2023.DAGA)
+* <details>
+  <summary>Clone</summary>
+  
+  ```
+  git clone --recurse-submodules https://github.com/HaHeho/baffled-arrays-to-binaural.git --branch v2023.DAGA
+  ```
+</details>
 
 ## Setup
 Clone the repository locally. Make sure to include the submodules with
@@ -26,22 +52,19 @@ Retrieve the following additional dependencies via the MATLAB Add-Ons menu or fr
 * `natsortfiles()` [[file exchange]](https://se.mathworks.com/matlabcentral/fileexchange/47434-natural-order-filename-sort)
 
 Furthermore, manually add the necessary acoustic impulse responses (external source files are subject to their corresponding licenses) to the project structure:
-* Microphone array impulse responses (see [`resources/ARIR_WDR/README`](resources/ARIR_WDR/README.md))
-* Head-related impulse responses (see [`resources/HRIR_KU100/README`](resources/HRIR_KU100/README.md))
+* Microphone array impulse responses (see [`resources/ARIR_processed/README`](resources/ARIR_processed/README.md))
+* **XMA** calibration and equalization filters (see [`resources/ARIR_processed/README`](resources/ARIR_processed/README.md))
+* Head-related impulse responses (see [`resources/HRIR_KEMAR/README`](resources/HRIR_KEMAR/README.md))
 
 ## Usage
-Script [`x1_Simulate_Arrays.m`](x1_Simulate_Arrays.m):
-* Simulate a plane wave impinging from an arbitrary direction on SMAs and EMAs with a desired sampling grid in an anechoic environment.
-* Such simulations are helpful to evaluate the rendering method and to investigate the influence of different sampling grids and equalization methods on the rendered binaural signals.
-
-Script [`x3_Subsample_Measurements.m`](x3_Subsample_Measurements.m):
-* Spatially subsample a high-resolution directional impulse response data set into a different (lower-resolution) sampling grid in the spherical harmonics domain. This is suitable for array and HRIR data sets.
-* The script also compares the subsampled data against a measured reference set if available.
+Script [`x4_Preprocess_HRTFs.m`](x4_Preprocess_HRTFs.m):
+* Pre-process an HRTF data set in various ways before employing it for binaural rendering. At this point, we utilize a spatially subsampled set of the published HRTF to lower computation resources for all binaural renderings without losing spatial resolution.
+* The HRTFs are circ-shifted so that the signals start with the lowest energy sample out of all incidence directions and both ears. The data is then time-windowed to fade the start and the end of the HRTFs to further limit artifacts from time discontinuities. The resulting data set is exported with the suffix `_adjusted`, then utilized in the remainder of the binaural rendering.
+* Additional versions of the data set are exported employing direction-independent equalizations by the HRTFs diffuse-field response (suffix `_diffuse`), by the former superimposed with the Harman curve (suffix `_harman`), and by the diffuse-field response of another measurement of the same HRTF (suffix `_reference`). Thereby, respective minimum-phase and linear-phase variants of the generated equalization filters are exported as impulse responses and plotted.
 
 Script [`x5_Render_Arrays.m`](x5_Render_Arrays.m):
-* Perform binaural rendering of SMA and EMA impulse response data sets at a specified spherical harmonics order and with a desired HRTF set.
+* Perform binaural rendering of SMA, EMA and XMA impulse response data sets at a specified spherical harmonics order and with a desired HRTF set.
 * Thereby, a reference binaural room impulse response data set (either from a dummy head measurement or from a former high-resolution array rendering) can be specified. The reference data is compared against the currently rendered binaural ear signals by generating extensive plots to evaluate time domain and frequency domain differences individually at all rendered head orientations.
-* The script contains references and functionality for XMA rendering, which were left for consistency but should be obsolete for the DAGA publication.
 
 Script [`x5a_Render_Arrays_Batch.m`](x5a_Render_Arrays_Batch.m):
 * Consecutively perform an arbitrary combination of binaural renderings from microphone array impulse responses and varying parameter sets.
@@ -52,12 +75,11 @@ Script [`x5b_Compare_Rendering_Differences.m`](x5b_Compare_Rendering_Differences
 Script [`x5c_Compare_Rendering_Levels.m`](x5c_Compare_Rendering_Levels.m):
 * Compare arbitrary combinations of (rendered) binaural room impulse responses by plotting various resulting signal levels. This is helpful for the preparation of the rendered BRIRs for the perceptual comparison in a user study, where all stimuli should ideally be loudness normalized.
 
-Script [`x5d_Gather_Rendering_Results.m`](x5d_Gather_Rendering_Results.m):
-* Generate plots to compare specified combinations of rendered binaural room impulse responses to a designated reference. These plots are used in the publication manuscript.
+Script [`x5d_Compare_Rendering_EDC.m`](x5d_Compare_Rendering_EDC.m):
+* Generate an interactive plot to compare arbitrary combinations of (rendered) binaural room impulse responses by their Energy Decay Curve. This is helpful for directly comparing similar rendering configurations and validating the rendering method or detecting potentially flawed data sets.
 
-Script [`x6_Render_Static_Auralizations.m`](x6_Render_Static_Auralizations.m):
-* Perform convolution of (rendered) binaural room impulse responses with a source audio signal. This is done for a specified selection of static head orientations and a continuous rotation over all horizontal head orientations. 
-* The resulting auralizations are published as supplementary materials to the manuscript.
+Script [`x5e_Compare_Rendering_Azimuths.m`](x5e_Compare_Rendering_Azimuths.m):
+* Generate an interactive plot to compare arbitrary combinations of rendered binaural room impulse responses by their azimuth alignment angle applied during binaural rendering. This is helpful for directly comparing similar rendering configurations and validating the rendering method or detecting potentially flawed data sets.
 
 ## Contributing
 See [CONTRIBUTING](CONTRIBUTING.md) and [CODE_OF_CONDUCT](CODE_OF_CONDUCT.md) for full details.
