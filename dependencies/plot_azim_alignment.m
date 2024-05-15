@@ -4,6 +4,8 @@ function plot_azim_alignment(az, min_shift, min_shift_ind, ...
 
     if nargin < 8; do_normalize = true; end
 
+    if ~iscell(title_str); title_str = {title_str}; end
+
     tl = tiledlayout(2, size(specs_diff, 3), 'TileSpacing', 'tight', 'Padding', 'tight');
     drawnow;
     colormap(AKcolormaps('Greys', 128, true));

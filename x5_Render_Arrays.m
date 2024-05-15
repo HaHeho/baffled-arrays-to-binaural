@@ -1,4 +1,4 @@
-% Perform binaural rendering of SMA and EMA impulse response data sets
+% Perform binaural rendering of SMA, EMA and XMA impulse response data sets
 % at a specified spherical harmonics order and with a desired HRTF set.
 %
 % Thereby, a reference binaural room impulse response data set (either
@@ -7,10 +7,6 @@
 % currently rendered binaural ear signals by generating extensive plots to
 % evaluate time domain and frequency domain differences individually at all 
 % rendered head orientations.
-%
-% The script contains references and functionality for XMA rendering,
-% which were left for consistency but should be obsolete for the DAGA
-% publication.
 %
 % -------------------------------------------------------------------------
 %
@@ -25,7 +21,7 @@
 %
 % -------------------------------------------------------------------------
 %
-% Hannes Helmholz 07.06.2023
+% Hannes Helmholz 12.10.2023
 %
 % -------------------------------------------------------------------------
 is_batch_mode = length(dbstack) > 1;
@@ -39,28 +35,32 @@ addpath(genpath('dependencies'));
 data_export_dir = 'resources/BRIR_rendered';
 plot_export_dir = 'plots/5_Rendering';
 
-global DO_PLOT DO_PLOT_PRESEN DO_EXPORT_PLOT %#ok<*GVMIS> 
-global DO_EXPORT_META DO_EXPORT_FLAC DO_EXPORT_SSR 
+global DO_PLOT DO_PLOT_PRESEN DO_EXPORT_PLOT; %#ok<*GVMIS> 
+global DO_EXPORT_META DO_EXPORT_AURA DO_EXPORT_BRIR;
 if ~is_batch_mode
     DO_PLOT        = true;
-    DO_PLOT_PRESEN = true;
+    DO_PLOT_PRESEN = false;
     DO_EXPORT_PLOT = true;
     DO_EXPORT_META = true;
-    DO_EXPORT_SSR  = true;
-    DO_EXPORT_FLAC = false;
+    DO_EXPORT_BRIR = true;
+    DO_EXPORT_AURA = false;
 
     % DO_PLOT        = false;
-    % DO_PLOT_PRESEN = false;
+    % DO_PLOT_PRESEN = true;
     % DO_EXPORT_PLOT = false;
     % DO_EXPORT_META = false;
-    % DO_EXPORT_SSR  = false;
-    % DO_EXPORT_FLAC = true;
+    % DO_EXPORT_BRIR = false;
+    % DO_EXPORT_AURA = true;
 end
 
 fprintf('Parsing configuration parameters ... ');
 global params
 if ~isfield(params, 'hrir_file')
-    [params.hrir_max_N, params.hrir_file] = deal(44, 'resources/HRIR_KU100/HRIR_L2702.sofa'); % KU100 for DAGA publication for compatibility to reference BRIRs
+    % [params.hrir_max_N, params.hrir_file] = deal(44, 'resources/HRIR_KEMAR/Kemar_HRTF_sofa_N44.sofa'); % unmodified
+    [params.hrir_max_N, params.hrir_file] = deal(44, 'resources/HRIR_KEMAR/Kemar_HRTF_sofa_N44_adjusted.sofa'); % time adjusted
+    % [params.hrir_max_N, params.hrir_file] = deal(44, 'resources/HRIR_KEMAR/Kemar_HRTF_sofa_N44_reference.sofa'); % time adjusted + spec equalized to own measurement
+    % [params.hrir_max_N, params.hrir_file] = deal(44, 'resources/HRIR_KEMAR/Kemar_HRTF_sofa_N44_diffuse.sofa'); % time adjusted + spec equalized to diffuse field
+    % [params.hrir_max_N, params.hrir_file] = deal(44, 'resources/HRIR_KEMAR/Kemar_HRTF_sofa_N44_harman.sofa'); % time adjusted + spec equalized to diffuse field + Harman curve
 end
 if ~isfield(params, 'sh_type')
     params.sh_type = 'real';
@@ -71,7 +71,7 @@ if ~isfield(params, 'sh_with_weights')
     % params.sh_with_weights = false; % do not use qudrature weights for SH transformations (pseudo-inverse will be used)
 end
 if ~isfield(params, 'half_block_length')
-    params.half_block_length = 8192; % in samples
+    params.half_block_length = 8192; % in samples, required minimum for XMA
     % params.half_block_length = 4096; % in samples, required minimum for SMA and EMA
 end
 if ~isfield(params, 'rf_reg_type')
@@ -83,36 +83,29 @@ if ~isfield(params, 'rf_lim_dB')
     params.rf_lim_dB = 18; % in dB, according to Ambisonics convention
 end
 if ~isfield(params, 'rf_len')
-    params.rf_len = 8192; % in samples, for DAGA publication
-    % params.rf_len = 4096; % in samples, to be sure that zero-padded filters are well defined (e.g. at SH2)
+    params.rf_len = 4096; % in samples, to be sure that zero-padded filters are well defined (e.g. at SH2)
     % params.rf_len = 2048; % in samples, recommended minimum for EMA
     % params.rf_len = 1024; % in samples, recommended minimum for SMA
 end
 if ~isfield(params, 'eq_type')
     params.eq_type = '';
     % params.eq_type = 'MagLS';
-    % params.eq_type = 'MagLSwDC';
-    % params.eq_type = 'MagLS+SHF';
-    % params.eq_type = 'MagLS+ADF'
     % params.eq_type = 'eMagLS';
-    % params.eq_type = 'eMagLSwDC';
-    % params.eq_type = 'eMagLSinCH';
-    % params.eq_type = 'eMagLSinCHwDC';
     % params.eq_type = 'eBreve';
 end
 if ~isfield(params, 'eq_magls_len')
     params.eq_magls_len = 512; % in samples
 end
 if ~isfield(params, 'eq_xma_len')
-    params.eq_xma_len = 1024; % in samples, obsolete for the DAGA publication
+    params.eq_xma_len = 1024; % in samples, as determined by Jens
 end
 if ~isfield(params, 'anec_simulation')
     params.anec_simulation = true;
     % params.anec_simulation = false;
 end
 if ~isfield(params, 'azim_align')
-    params.azim_align = false;
-    % params.azim_align = true;
+    params.azim_align = true;
+    % params.azim_align = false;
 end
 if ~isfield(params, 'azim_align_frac_sm')
     params.azim_align_frac_sm = 24; % in fractional octaves
@@ -159,44 +152,29 @@ if ~isfield(params, 'plot_resolution')
 end
 
 if ~isfield(params, 'array_file')
-    %%
-    % Vertical rotation
-    params.reference_file = 'resources/HRIR_KU100/HRIR_L2702_vertical_SSR360.sofa'; % generate reference BRIRs from high-resolution SMA
-    [params.N, params.array_file] = deal(29, 'resources/ARIR_WDR/SIM_VSA_SMA_LE1202_PW_struct_SubSampled_SH44.mat');
-    % params.reference_file = 'resources/HRIR_KU100/HRIR_L2702_vertical_SSR360.sofa';
-    params.reference_file = 'resources/BRIR_rendered/HRIR_L2702/SIM_VSA_SMA_LE1202_PW_struct_SubSampled_SH44_vertical_SSR.wav';
-    [params.N, params.array_file] = deal(2, 'resources/ARIR_WDR/SIM_VSA_SMA_LE14_PW_struct_SubSampled_SH44.mat');
-    % [params.N, params.array_file] = deal(4, 'resources/ARIR_processed/Simulation_SMA_EM32_SrcEar.sofa'); % 4.2 cm radius
-    % [params.N, params.array_file] = deal(4, 'resources/ARIR_WDR/SIM_VSA_SMA_LE38_PW_struct_SubSampled_SH44.mat');
-    % [params.N, params.array_file] = deal(8, 'resources/ARIR_WDR/SIM_VSA_SMA_LE110_PW_struct_SubSampled_SH44.mat');
-    % [params.N, params.array_file] = deal(12, 'resources/ARIR_WDR/SIM_VSA_SMA_LE230_PW_struct_SubSampled_SH44.mat');
-    % [params.N, params.array_file] = deal(2, 'resources/ARIR_WDR/SIM_VSA_EMA5_PW_struct_SubSampled_SH44.mat');
-    % [params.N, params.array_file] = deal(4, 'resources/ARIR_WDR/SIM_VSA_EMA9_PW_struct_SubSampled_SH44.mat');
-    % [params.N, params.array_file] = deal(8, 'resources/ARIR_WDR/SIM_VSA_EMA17_PW_struct_SubSampled_SH44.mat');
-    % [params.N, params.array_file] = deal(12, 'resources/ARIR_WDR/SIM_VSA_EMA25_PW_struct_SubSampled_SH44.mat');
-    % [params.N, params.array_file] = deal(29, 'resources/ARIR_WDR/SIM_VSA_EMA59_PW_struct_SubSampled_SH44.mat');
+    % Simulations - useful for debugging
+    params.reference_file = 'resources/HRIR_KEMAR/Kemar_HRTF_sofa_N44_adjusted_SSR.wav';
+    [params.N, params.array_file] = deal(44, 'resources/ARIR_processed/Simulation_SMA_LE2702_SrcEar.sofa'); % generate reference BRIRs from high-resolution SMA
+    params.reference_file = 'resources/BRIR_rendered/Kemar_HRTF_sofa_N44_adjusted/Simulation_SMA_LE2702_SrcEar_SSR.wav';
+    [params.N, params.array_file] = deal(2, 'resources/ARIR_processed/Simulation_SMA_TD14_SrcEar_SubSampled_SH44.sofa');
+    [params.N, params.array_file] = deal(2, 'resources/ARIR_processed/Simulation_EMA5_SrcEar_SubSampled_SH44.sofa');
 
-    % % Horizontal rotation
-    % params.reference_file = 'resources/HRIR_KU100/HRIR_L2702_SSR360.sofa'; % generate reference BRIRs from high-resolution SMA
-    % [params.N, params.array_file] = deal(29, 'resources/ARIR_WDR/SIM_VSA_SMA_LE1202_PW_struct_SubSampled_SH44.mat');
-    % params.reference_file = 'resources/BRIR_rendered/HRIR_L2702/SIM_VSA_SMA_LE1202_PW_struct_SubSampled_SH44_SSR.wav';
-    % [params.N, params.array_file] = deal(2, 'resources/ARIR_WDR/SIM_VSA_SMA_LE14_PW_struct_SubSampled_SH44.mat');
-    % [params.N, params.array_file] = deal(4, 'resources/ARIR_processed/Simulation_SMA_EM32_SrcEar.sofa'); % 4.2 cm radius
-    % [params.N, params.array_file] = deal(4, 'resources/ARIR_WDR/SIM_VSA_SMA_LE38_PW_struct_SubSampled_SH44.mat');
-    % [params.N, params.array_file] = deal(8, 'resources/ARIR_WDR/SIM_VSA_SMA_LE110_PW_struct_SubSampled_SH44.mat');
-    % [params.N, params.array_file] = deal(12, 'resources/ARIR_WDR/SIM_VSA_SMA_LE230_PW_struct_SubSampled_SH44.mat');
-    % [params.N, params.array_file] = deal(2, 'resources/ARIR_WDR/SIM_VSA_EMA5_PW_struct_SubSampled_SH44.mat');
-    % [params.N, params.array_file] = deal(4, 'resources/ARIR_WDR/SIM_VSA_EMA9_PW_struct_SubSampled_SH44.mat');
-    % [params.N, params.array_file] = deal(8, 'resources/ARIR_WDR/SIM_VSA_EMA17_PW_struct_SubSampled_SH44.mat');
-    % [params.N, params.array_file] = deal(12, 'resources/ARIR_WDR/SIM_VSA_EMA25_PW_struct_SubSampled_SH44.mat');
-    % [params.N, params.array_file] = deal(29, 'resources/ARIR_WDR/SIM_VSA_EMA59_PW_struct_SubSampled_SH44.mat');
+    % Anechoic measurements - useful for debugging
+    params.reference_file = 'resources/ARIR_processed/Anechoic_KEMAR_SrcEar.sofa';
+    [params.N, params.array_file] = deal(44, 'resources/ARIR_processed/Anechoic_SMA_LE2702_SrcEar.sofa'); % generate reference BRIRs from high-resolution SMA
+    params.reference_file = 'resources/BRIR_rendered/Kemar_HRTF_sofa_N44_adjusted/Anechoic_SMA_LE2702_SrcEar_SSR.wav';
+    [params.N, params.array_file] = deal(2, 'resources/ARIR_processed/Anechoic_SMA_TD14_SrcEar_SubSampled_SH44.sofa');
+    [params.N, params.array_file] = deal(2, 'resources/ARIR_processed/Anechoic_EMA5_SrcEar_SubSampled_SH44.sofa');
+    [params.N, params.array_file] = deal(2, 'resources/ARIR_processed/Anechoic_XMA6_SrcEar.sofa');
+    [params.N, params.array_file] = deal(2, 'resources/ARIR_processed/Anechoic_XMA6v2_SrcEar.sofa');
 
-    % params.reference_file = 'resources/ARIR_WDR/BRIR_CR1_KU_ROTM_L.sofa'; % generate reference BRIRs from high-resolution SMA
-    % [params.N, params.array_file] = deal(29, 'resources/ARIR_WDR/CR1_VSA_SMA_LE1202_L_struct.mat');
-    % params.reference_file = 'resources/BRIR_rendered/HRIR_L2702/CR1_VSA_SMA_LE1202_L_struct_SSR.wav';
-    % [params.N, params.array_file] = deal(2, 'resources/ARIR_WDR/CR1_VSA_SMA_LE14_L_struct_SubSampled_SH29.mat');
-    % [params.N, params.array_file] = deal(4, 'resources/ARIR_WDR/CR1_VSA_SMA_LE38_L_struct_SubSampled_SH29.mat');
-    % [params.N, params.array_file] = deal(8, 'resources/ARIR_WDR/CR1_VSA_SMA_LE110_L_struct_SubSampled_SH29.mat');
+    % Lab (dry) with floor reflection
+    params.reference_file = 'resources/ARIR_processed/LabWet_KEMAR_SrcEar.sofa';
+    [params.N, params.array_file] = deal(44, 'resources/ARIR_processed/LabWet_SMA_LE2702_SrcEar.sofa'); % generate reference BRIRs from high-resolution SMA
+    params.reference_file = 'resources/BRIR_rendered/Kemar_HRTF_sofa_N44_adjusted/LabWet_SMA_LE2702_SrcEar_SSR.wav';
+    [params.N, params.array_file] = deal(2, 'resources/ARIR_processed/LabWet_SMA_TD14_SrcEar_SubSampled_SH44.sofa');
+    [params.N, params.array_file] = deal(2, 'resources/ARIR_processed/LabWet_EMA5_SrcEar_SubSampled_SH44.sofa');
+    [params.N, params.array_file] = deal(2, 'resources/ARIR_processed/LabWet_XMA6_SrcEar.sofa');
 end
 
 %% verify configuration
@@ -315,18 +293,18 @@ elseif endsWith(params.array_file, '.mat')
     array_temp = double(tmp.avgAirTemp); % in degrees Celcius
 
 elseif endsWith(params.array_file, '.wav')
-    [array_signals, fs] = audioread(params.array_file);
-    array_grid_rad = linspace(0, 2*pi, size(array_signals, 2) + 1); % azimuth in rad
-    array_grid_rad = array_grid_rad(:, 1:end - 1);
-    array_grid_rad(2, :) = pi/2; % colatitude in rad
-    array_grid_rad2 = -get_array_grid('SSR', [], true, true).'; % azimuth and colatitude in rad
-    array_grid_weights = []; % no qudrature weights available (pseudo-inverse will be used)
-    array_radius = []; % in m
-    array_temp = []; % in degrees Celcius
+    % [array_signals, fs] = audioread(params.array_file);
+    % array_grid_rad = linspace(0, 2*pi, size(array_signals, 2) + 1); % azimuth in rad
+    % array_grid_rad = array_grid_rad(:, 1:end - 1);
+    % array_grid_rad(2, :) = pi/2; % colatitude in rad
+    % array_grid_rad2 = -get_array_grid('SSR', [], true, true).'; % azimuth and colatitude in rad
+    % array_grid_weights = []; % no qudrature weights available (pseudo-inverse will be used)
+    % array_radius = []; % in m
+    % array_temp = []; % in degrees Celcius
     error('The updated array grid needs to be verified!');
     
 else
-    [~, ~, tmp] = fileparts(params.array_file); 
+    [~, ~, tmp] = fileparts(params.array_file);
     error('Data loading for data type "*%s" not implemented yet.', tmp);
 end
 fprintf('with %d samples ... ', size(array_signals, 1));
@@ -346,15 +324,15 @@ end
 
 fprintf('Zero-padding array signals ... ');
 if params.circ_align
-%     % This setting would work for all except XMA configurations
-%     % (it leads to the circshifted beginnings of the rendered BRIRs 
-%     % exhibiting a too high level in order to be cut-off in the end by
-%     % `trunc_threshold`)
-%     params.circ_len = -(params.rf_len/2 + params.eq_magls_len/2 + params.eq_xma_len); % in samples
-%     % This setting is slightly too much for XMA+eBreve configurations
-%     params.circ_len = -(params.rf_len + params.eq_magls_len + params.eq_xma_len)/2; % in samples
-%     % This setting works well for most XMA configurations
-%     params.circ_len = -(params.rf_len + params.eq_xma_len)/2; % in samples
+    % % This setting would work for all except XMA configurations
+    % % (it leads to the circshifted beginnings of the rendered BRIRs 
+    % % exhibiting a too high level in order to be cut-off in the end by
+    % % `trunc_threshold`)
+    % params.circ_len = -(params.rf_len/2 + params.eq_magls_len/2 + params.eq_xma_len); % in samples
+    % % This setting is slightly too much for XMA+eBreve configurations
+    % params.circ_len = -(params.rf_len + params.eq_magls_len + params.eq_xma_len)/2; % in samples
+    % % This setting works well for most XMA configurations
+    % params.circ_len = -(params.rf_len + params.eq_xma_len)/2; % in samples
     % This setting is safe for all XMA configurations
     params.circ_len = -params.rf_len/3; % in samples
 else
@@ -377,16 +355,10 @@ if isempty(params.reference_file)
     fprintf('... skipped.\n');
 
     fprintf('Generating head orientation target directions ... ');
-    % % Horizontal sweep from 0 deg to -359 deg
-    % % (according to the file convention that the SSR requires)
-    % array_file = [array_file, '_horizontal'];
-    % reference_azel_deg = get_array_grid('SSR', [], false, false).';
-
-    % Vertical sweep from 0 deg to -359 deg
-    % (according to the file convention that the SSR requires, for testing
-    % purposes, as the scene will not be usable with the regular azimuth 
-    % head tracking)
-    reference_azel_deg = get_array_grid('SSR_vertical', [], false, false).';
+    % Horizontal sweep from 0 deg to -359 deg
+    % (according to the file convention that the SSR requires)
+    array_file = [array_file, '_horizontal'];
+    reference_azel_deg = get_array_grid('SSR', [], false, false).';
     fprintf('done.\n');
 else
     fprintf('"%s" ... ', params.reference_file);
@@ -427,9 +399,12 @@ fprintf('to %d target directions ... ', size(reference_azel_deg, 2));
 % Correct small values to 0
 reference_azel_deg(abs(reference_azel_deg) < 1e-5) = 0;
 
-% Determine if vertical rotation grid is used
+% Determine what kind of grid is used
 is_vertical = all(reference_azel_deg(1, :) == 0 ...
     | reference_azel_deg(1, :) == 180 | reference_azel_deg(1, :) == -180);
+is_spherical = ~is_vertical && ~all(reference_azel_deg(2, :) == 0 ...
+    | reference_azel_deg(2, :) == 360 | reference_azel_deg(2, :) == -360);
+assert(~(is_vertical && is_spherical), 'Something went wrong in detecting reference grid.');
 
 if is_vertical
     % Translate SH spherical coordinate convention into continous elevation
@@ -446,12 +421,13 @@ if is_vertical
     clear idx;
 end
 
-% Change to "navigational" azimuth and elevation grid, since it looks nicer
-% (done separately for elevation, since it does not work as intended
-% otherwise)
-reference_azel_deg(1, :) = sph2nav(reference_azel_deg(1, :));
-reference_azel_deg(2, :) = sph2nav(reference_azel_deg(2, :));
-% reference_azel_deg(reference_azel_deg == 180) = -180; % for nicer plotting
+if ~is_spherical
+    % Change to "navigational" azimuth and elevation grid, since it looks nicer
+    % (done separately for elevation, since it does not work as intended
+    % otherwise)
+    reference_azel_deg(1, :) = sph2nav(reference_azel_deg(1, :));
+    reference_azel_deg(2, :) = sph2nav(reference_azel_deg(2, :));
+end
 
 % Generate matrix of independently rendered head orientations
 output_azel_rad = repmat(deg2rad(reference_azel_deg), [1, 1, size(array_signals, 1)]); % [2; 360; samples]
@@ -460,9 +436,13 @@ output_azel_rad = repmat(deg2rad(reference_azel_deg), [1, 1, size(array_signals,
 reference_azel_deg = single(reference_azel_deg);
 output_azel_rad = single(output_azel_rad);
 
-if is_vertical
+if is_vertical || is_spherical
     params.azim_align = false;
-    array_file = [array_file, '_vertical'];
+    if is_vertical
+        array_file = [array_file, '_vertical'];
+    else
+        array_file = [array_file, '_spherical'];
+    end
 end
 fprintf('done.\n');
 fprintf('\n');
@@ -490,6 +470,9 @@ elseif contains(params.eq_type, 'MagLS', 'IgnoreCase', true)
     hrir_sofa = SOFAload(params.hrir_file);
     % extract measurement directions
     hrir_grid_rad = azEl2azCo(deg2rad(hrir_sofa.SourcePosition(:, 1:2)).'); % elevation to colatitude
+    % if params.sh_with_weights
+    %     hrir_grid_weights = hrir_sofa.SourceQuadWeight;
+    % end
     % extract IRs
     hrir = get_SOFA_IRs(hrir_sofa);
     fprintf('with %d samples ... ', size(hrir, 1));
@@ -521,22 +504,6 @@ elseif contains(params.eq_type, 'MagLS', 'IgnoreCase', true)
                     array_radius, array_grid_rad(1, :).', params.N, fs, ...
                     params.eq_magls_len, is_diffusenessConst, params.sh_type, @getSH_AmbiEnc);
             end
-%             [hrirs_nm2(:, :, 1), hrirs_nm2(:, :, 2)] = getEMagLsFiltersEMAinCHtoSH( ...
-%                 hrir(:, :, 1), hrir(:, :, 2), hrir_grid_rad(1, :).', hrir_grid_rad(2, :).', ...
-%                 array_radius, array_grid_rad(1, :).', params.N, fs, ...
-%                 params.eq_magls_len, false, params.sh_type, @getSH_AmbiEnc, @getCH);
-%             [hrirs_nm3(:, :, 1), hrirs_nm3(:, :, 2)] = getEMagLsFiltersEMAinEHtoSH( ...
-%                 hrir(:, :, 1), hrir(:, :, 2), hrir_grid_rad(1, :).', hrir_grid_rad(2, :).', ...
-%                 array_radius, array_grid_rad(1, :).', params.N, fs, ...
-%                 params.eq_magls_len, false, params.sh_type, @getSH_AmbiEnc, @getCH);
-%             [hrirs_nm3(:, :, 1), hrirs_nm3(:, :, 2)] = getEMagLsFiltersEMA_old( ...
-%                 hrir(:, :, 1), hrir(:, :, 2), hrir_grid_rad(1, :).', hrir_grid_rad(2, :).', ...
-%                 array_radius, array_grid_rad(1, :).', params.N, fs, ...
-%                 params.eq_magls_len, false, params.sh_type, @getSH_AmbiEnc, @getCH);
-%             [hrirs_nmT(:, :, 1), hrirs_nmT(:, :, 2)] = getEMagLsFiltersEMA_Tommi( ...
-%                 hrir(:, :, 1), hrir(:, :, 2), hrir_grid_rad(1, :).', hrir_grid_rad(2, :).', ...
-%                 array_radius, array_grid_rad(1, :).', params.N, fs, ...
-%                 params.eq_magls_len);
         end
     else % MagLS
         [hrirs_nm(:, :, 1), hrirs_nm(:, :, 2)] = getMagLsFilters( ...
@@ -638,15 +605,14 @@ if strcmpi(params.array_type, 'XMA')
         sprintf('Anechoic_%s_SrcEar', base_name{1}{1}));
     fprintf('done.\n');
 
-    % file_name = sprintf('%s_x_nm_%s_v13.mat', base_name, params.sh_type);
-    file_name = sprintf('%s_x_nm_%s_v14.mat', base_name, params.sh_type);
+    file_name = sprintf('%s_x_nm_%s.mat', base_name, params.sh_type);
     fprintf('Loading XMA calibration file "%s" ... ', file_name);
     tmp = load(file_name);
     x_nm = tmp.x_nm;
-%     if size(x_nm, 2) > size(arrayant _signals, 2)
-%         warning('received wrong number of input channels, trying to fix ... ');
-%         x_nm = x_nm(:, 1 : size(x_nm, 2) / size(array_signals, 2) : end, :);
-%     end
+    % if size(x_nm, 2) > size(arrayant _signals, 2)
+    %     warning('received wrong number of input channels, trying to fix ... ');
+    %     x_nm = x_nm(:, 1 : size(x_nm, 2) / size(array_signals, 2) : end, :);
+    % end
     array_radius = tmp.R_projection; % This has to be set before generating the radial filters!
     assert(tmp.fs == fs, 'Mismatch in sampling frequencies.');
     clear tmp;
@@ -664,8 +630,7 @@ if strcmpi(params.array_type, 'XMA')
 
     fprintf('Loading XMA equalization file ');
     if strcmpi(params.eq_type, 'eBreve')
-        % file_name = sprintf('%s_e_nm_%s_v13.mat', base_name, params.sh_type);
-        file_name = sprintf('%s_e_nm_%s_v14.mat', base_name, params.sh_type);
+        file_name = sprintf('%s_e_nm_%s.mat', base_name, params.sh_type);
         fprintf('"%s" ... ', file_name)
         tmp = load(file_name);
         e_breve_nm = cat(3, tmp.e_breve_nm_l, tmp.e_breve_nm_r);
@@ -706,14 +671,14 @@ if strcmpi(params.array_type, 'XMA')
 else
     % introduce delay to have all resulting BRIRs time aligned
     hrtfs_nm = apply_delay_fd(hrtfs_nm, params.eq_xma_len);
-    fprintf('... skipped.\n');
+    fprintf('skipped.\n');
 end
 fprintf('\n');
 
 %% precompute radial filters
 fprintf('Computing radial filters ... ');
 C = compute_speed_of_sound(array_temp);
-% Alternatives to calculate the SMA aliasing frequency could be e.g.
+% Alternatives to estimate the SMA aliasing frequency could be e.g.
 % https://github.com/polarch/Spherical-Array-Processing/blob/master/sphArrayAliasLim.m
 freq_SMA_alias = C * params.N / (2*pi * array_radius);
 if DO_PLOT_PRESEN
@@ -1177,7 +1142,9 @@ if ~isempty(params.reference_file)
     % fprintf('by %.1f dB of reference mean RSSQ amplitude ... ', db(norm_fact));
     % output_signals = output_signals * norm_fact;
     % clear norm_fact;
-    if is_vertical
+    if is_spherical
+        error('Not implemented yet.');
+    elseif is_vertical
         [~, front_idx] = min(abs(reference_azel_deg(2, :)));
     else
         [~, front_idx] = min(abs(reference_azel_deg(1, :)));
@@ -1254,6 +1221,7 @@ if DO_EXPORT_META
     file_vars = file_vars(~strcmp({file_vars.name}, 'hrir_file'));
     file_vars = file_vars(~strcmp({file_vars.name}, 'hrtfs_nm'));
     file_vars = file_vars(~strcmp({file_vars.name}, 'one_over_b_n_limited'));
+    file_vars = file_vars(~strcmp({file_vars.name}, 'output_azel_rad'));
     file_vars = file_vars(~strcmp({file_vars.name}, 'output_signals'));
     file_vars = file_vars(~strcmp({file_vars.name}, 'plot_export_dir'));
     file_vars = file_vars(~strcmp({file_vars.name}, 'reference_file'));
@@ -1268,21 +1236,21 @@ else
     disp('Exporting array rendering metadata ... skipped.');
 end
 
-if DO_EXPORT_FLAC
+if DO_EXPORT_AURA
     file_name = fullfile(data_export_dir, [array_file, '_binaural.flac']);
     fprintf('Exporting file "%s" ... ', file_name);
     [~, ~] = mkdir(data_export_dir); % ignore warning if directory already exists
     file_data = squeeze(output_signals);
-    file_data = file_data / max(abs(file_data), [], 'all'); % normalize to 1
+    file_data = file_data * .99 / max(abs(file_data), [], 'all'); % normalize to 1
     audiowrite(file_name, file_data, fs, 'BitsPerSample', 16);
     clear file_name file_data;
     fprintf('done.\n');
 else
-    disp('Exporting array rendering FLACs ... skipped.');
+    disp('Exporting array rendering auralizations ... skipped.');
 end
 
-fprintf('Exporting array SSR BRIRs ');
-if DO_EXPORT_SSR
+fprintf('Exporting array BRIRs ');
+if DO_EXPORT_BRIR
     export_SSR_BRIRs(fullfile(data_export_dir, array_file), ...
         output_signals, fs, reference_azel_deg);
 else
@@ -1290,8 +1258,8 @@ else
 end
 
 if ~isempty(params.reference_file)
-    fprintf('Exporting reference SSR BRIRs ');
-    if DO_EXPORT_SSR
+    fprintf('Exporting reference BRIRs ');
+    if DO_EXPORT_BRIR
         file = fullfile(data_export_dir, reference_file);
         if strcmp(filesep(), '\')
             file = strrep(file, '\', '/'); % fix path string compare on Windows
@@ -1305,8 +1273,8 @@ if ~isempty(params.reference_file)
     else
         fprintf('... skipped.\n');
     end
-    fprintf('\n');
 end
+fprintf('\n');
 
 if DO_PLOT
     fprintf('Computing spectra ... ');
@@ -1376,66 +1344,8 @@ if DO_PLOT
         fprintf('done.\n');
     end
 
-    % if ~isempty(params.reference_file)
-    %     fprintf('Computing spectral differences before smoothing ... ');
-    %     output_diff_spec = compute_spectral_difference(output_spec, reference_spec);
-    %     fprintf('done.\n');
-    % 
-    %     fprintf('Normalizing spectral differences ... ');
-    %     fprintf('between %.1f Hz and %.1f Hz ... ', params.plot_norm_freq_rng);
-    %     norm_freqs = get_freqs_inclusive(freqs, params.plot_norm_freq_rng);
-    %     norm_lvl = mean(db(abs(output_diff_spec(norm_freqs, :, :))), [1, 2]); % based on median
-    %     fprintf('by [%+.1f, %+.1f] dB for left / right ear individually ... ', -norm_lvl);
-    %     output_diff_spec = output_diff_spec ./ db2mag(norm_lvl);
-    %     clear norm_freqs norm_lvl;
-    %     fprintf('done.\n');
-    % 
-    %     fprintf('Computing spectral difference percentiles ... ');
-    %     output_diff_spec_perc = compute_spectral_percentiles( ...
-    %         output_diff_spec, 2, params.plot_percentiles);
-    %     fprintf('done.\n');
-    % 
-    %     fprintf('Computing spectral differences with weighting ... ');
-    %     norm_spec = abs(reference_spec) ./ max(abs(reference_spec), [], [2, 3]);
-    %     output_diff_spec_w = db2mag(db(abs(output_diff_spec)) .* norm_spec);
-    %     output_diff_spec_perc_w = compute_spectral_percentiles( ...
-    %         output_diff_spec_w, 2, params.plot_percentiles);
-    %     clear norm_spec;
-    %     fprintf('done.\n');
-    % 
-    %     fprintf('Computing mean absolute spectral error ... ');
-    %     [~, output_diff_spec_log_err, freqs_log] = compute_spectral_error(output_diff_spec, 2, freqs);
-    %     [~, output_diff_spec_log_err_w, ~] = compute_spectral_error(output_diff_spec_w, 2, freqs);
-    %     fprintf('between %.1f Hz and %.1f Hz ... ', params.plot_freq_rng);
-    %     freqs_bin = get_freqs_inclusive(freqs_log, params.plot_freq_rng);
-    %     freqs_log = freqs_log(freqs_bin);
-    %     output_diff_spec_log_err = output_diff_spec_log_err(freqs_bin, :);
-    %     output_diff_spec_log_err_w = output_diff_spec_log_err_w(freqs_bin, :);
-    %     clear freqs_bin;
-    %     fprintf('done.\n');
-    % 
-    %     if params.plot_frac_sm
-    %         fprintf('Applying spectral smoothing ... of 1/%d octaves ... ', params.plot_frac_sm);
-    %         for e = 1 : size(output_spec, 3) % each ear
-    %             output_spec(:, :, e) = AKfractOctSmooth( ...
-    %                 output_spec(:, :, e), 'amp', fs, params.plot_frac_sm);
-    %             reference_spec(:, :, e) = AKfractOctSmooth( ...
-    %                 reference_spec(:, :, e), 'amp', fs, params.plot_frac_sm);
-    %             output_diff_spec(:, :, e) = AKfractOctSmooth( ...
-    %                 output_diff_spec(:, :, e), 'amp', fs, params.plot_frac_sm);
-    %             output_diff_spec_perc(:, :, e) = AKfractOctSmooth( ...
-    %                 output_diff_spec_perc(:, :, e), 'amp', fs, params.plot_frac_sm);
-    %             output_diff_spec_w(:, :, e) = AKfractOctSmooth( ...
-    %                 output_diff_spec_w(:, :, e), 'amp', fs, params.plot_frac_sm);
-    %             output_diff_spec_perc_w(:, :, e) = AKfractOctSmooth( ...
-    %                 output_diff_spec_perc_w(:, :, e), 'amp', fs, params.plot_frac_sm);
-    %         end
-    %         fprintf('done.\n');
-    %     end
-    % end
-
     plot_idx = 1 : size(reference_azel_deg, 2);
-    if size(output_signals, 1) / fs > 1.5
+    if size(output_signals, 1) / fs > 1.5 && ~is_spherical
         % reduce spatial resolution to 3 degrees for long BRIRs
         % (otherwise the figure may occupy too many system resources,
         % causing the export to fail)
@@ -1450,7 +1360,7 @@ if DO_PLOT
         'HandleVisibility', 'off', 'LabelOrientation', 'horizontal', ...
         'LabelVerticalAlignment', 'bottom', 'LabelHorizontalAlignment', 'right'};
 
-    %% generate plot
+    %% generate ETC plot
     fprintf('Generating plot "%s" ... ', fig_name);
     if params.plot_fig_size
         fig = AKf(params.plot_fig_size(1), params.plot_fig_size(2));
@@ -1497,7 +1407,7 @@ if DO_PLOT
     clear fig tl file_name;
     fprintf('done.\n');
 
-    %% generate plot
+    %% generate spetral plot
     fprintf('Generating plot "%s" ... ', fig_name);
     if params.plot_fig_size
         fig = AKf(params.plot_fig_size(1), params.plot_fig_size(2));
@@ -1521,7 +1431,7 @@ if DO_PLOT
         plot_spec_azims(reference_azel_deg(:, plot_idx), freqs, reference_spec(:, plot_idx, :), ...
             title_str, e, params.plot_freq_rng, true, params.plot_norm_freq_rng);
         if ~isempty(params.reference_file)
-            if is_vertical
+            if is_vertical || is_spherical
                 xline(ax, freq_SMA_alias, ':', '$f_\textrm{A}$', lbl_config{:});
                 yline(ax, 0, ':', 'LineWidth', 1, 'HandleVisibility','off');
             else
@@ -1552,12 +1462,14 @@ if DO_PLOT
         ax = nexttile(tl);
         plot_spec_azims(reference_azel_deg(:, plot_idx), freqs, output_spec(:, plot_idx, :), ...
             title_str, e, params.plot_freq_rng, true, params.plot_norm_freq_rng);
-        if is_vertical
+        if is_vertical || is_spherical
             xline(ax, freq_SMA_alias, ':', '$f_\textrm{A}$', lbl_config{:});
-            yline(ax, 0, ':', 'LineWidth', 1, 'HandleVisibility','off');
+            if is_vertical
+                yline(ax, 0, ':', 'LineWidth', 1, 'HandleVisibility','off');
+            end
         else
             if e == 1
-                xline(ax, 0, ':', 'ipsilateral direction $\rightarrow$', lbl_config{:});
+                xline(ax, 0, ':', 'ipsilateral direction $\rightarrow   $', lbl_config{:});
                 yline(ax, freq_SMA_alias, ':', '$f_\textrm{A}$', lbl_config{:}, ...
                     'LabelHorizontalAlignment', 'left', 'LabelVerticalAlignment', 'top');
             else
@@ -1584,7 +1496,7 @@ if DO_PLOT
     fprintf('done.\n');
 
     if ~isempty(params.reference_file)
-        %% generate plot
+        %% generate spectral difference plot
         fprintf('Generating plot "%s" ... ', fig_name);
         if params.plot_fig_size
             fig = AKf(params.plot_fig_size(1), params.plot_fig_size(2));
@@ -1605,9 +1517,11 @@ if DO_PLOT
             ax = nexttile(tl);
             plot_spec_azims(reference_azel_deg(:, plot_idx), freqs, output_diff_spec(:, plot_idx, :), ...
                 title_str, e, params.plot_freq_rng, true, params.plot_norm_freq_rng, params.plot_spec_c_rng);
-            if is_vertical
+            if is_vertical || is_spherical
                 xline(ax, freq_SMA_alias, ':', '$f_\textrm{A}$', lbl_config{:});
-                yline(ax, 0, ':', 'LineWidth', 1, 'HandleVisibility','off');
+                if is_vertical
+                    yline(ax, 0, ':', 'LineWidth', 1, 'HandleVisibility','off');
+                end
             else
                 if e == 1
                     xline(ax, 0, ':', 'ipsilateral direction $\rightarrow$', lbl_config{:});
@@ -1650,7 +1564,7 @@ if DO_PLOT
         clear fig tl title_str file_name;
         fprintf('done.\n');
 
-        %% generate plot
+        %% generate weighted spectral difference plot
         fprintf('Generating plot "%s" ... ', fig_name);
         if params.plot_fig_size
             fig = AKf(params.plot_fig_size(1), params.plot_fig_size(2));
@@ -1671,9 +1585,11 @@ if DO_PLOT
             ax = nexttile(tl);
             plot_spec_azims(reference_azel_deg(:, plot_idx), freqs, output_diff_spec_w(:, plot_idx, :), ...
                 title_str, e, params.plot_freq_rng, true, params.plot_norm_freq_rng, params.plot_spec_c_rng);
-            if is_vertical
+            if is_vertical || is_spherical
                 xline(ax, freq_SMA_alias, ':', '$f_\textrm{A}$', lbl_config{:});
-                yline(ax, 0, ':', 'LineWidth', 1, 'HandleVisibility','off');
+                if is_vertical
+                    yline(ax, 0, ':', 'LineWidth', 1, 'HandleVisibility','off');
+                end
             else
                 if e == 1
                     xline(ax, 0, ':', 'ipsilateral direction $\rightarrow$', lbl_config{:});
@@ -1742,7 +1658,7 @@ function Y = getSH_AmbiEnc(order, gridAziZenRad, shDefinition)
     end
 end
 
-function assertAllClose(x1, x2, norm_tol, spec_tol_dB)
+function assertAllClose(x1, x2, norm_tol, spec_tol_dB) %#ok<DEFNU>
     if nargin < 4; spec_tol_dB = 1; end
     if nargin < 3; norm_tol = 1e-13; end
 
