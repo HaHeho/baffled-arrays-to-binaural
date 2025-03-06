@@ -2,12 +2,12 @@
 This repository contains MATLAB code for the binaural rendering of spherical microphone arrays (**SMA**s), equatorial microphone arrays (**EMA**s), and non-spherical microphone arrays (**XMA**s).
 
 This version of the code (release [**v2024.JAES**](https://github.com/HaHeho/baffled-arrays-to-binaural/releases/tag/v2024.JAES)) was utilized in the manuscript
-> TODO_CITATION
+> H. Helmholz, J. Crukley, S. v. Amengual Garí, Z. Ben-Hur, and J. Ahrens, “Perceived Quality of Binaural Rendering From Baffled Microphone Arrays Evaluated Without an Explicit Reference,” Journal of the Audio Engineering Society, vol. 72, no. 10, pp. 691–704, 2024, doi: 10.17743/jaes.2022.0164.
 > <br>
-> [[TODO_pdf]](TODO_PDF)
+> [[pdf]](https://aes2.org/e-lib/download.cfm/pg691.pdf?ID=22772)
 > [[audio examples]](http://www.ta.chalmers.se/research/audio-technology-group/audio-examples/jaes-2024a/)
-> [[data]](https://zenodo.org/records/8206571)
-> [[experiment resources]](https://doi.org/10.5281/zenodo.10901444)
+> [[data]](https://zenodo.org/doi/10.5281/zenodo.8206570)
+> [[experiment resources]](https://zenodo.org/doi/10.5281/zenodo.10901443)
 * [README](https://github.com/HaHeho/baffled-arrays-to-binaural/tree/v2024.JAES)
 * [Download](https://github.com/HaHeho/baffled-arrays-to-binaural/releases/tag/v2024.JAES)
 * <details>
@@ -19,7 +19,7 @@ This version of the code (release [**v2024.JAES**](https://github.com/HaHeho/baf
 </details>
 
 An older version of the code (release [**v2023.DAGA**](https://github.com/HaHeho/baffled-arrays-to-binaural/releases/tag/v2023.DAGA)) was utilized in the manuscript
-> H. Helmholz, T. Deppisch, and J. Ahrens, “End-to-End Magnitude Least Squares Binaural Rendering for Equatorial Microphone Arrays,” in Fortschritte der Akustik -- DAGA 2023, 2023, pp. 1679–1682.
+> H. Helmholz, T. Deppisch, and J. Ahrens, “End-to-End Magnitude Least Squares Binaural Rendering for Equatorial Microphone Arrays,” in Fortschritte der Akustik -- DAGA 2023, Hamburg, Germany: Deutsche Gesellschaft für Akustik, 2023, pp. 1679–1682.
 > <br>
 > [[pdf]](https://research.chalmers.se/publication/535525/file/535525_Fulltext.pdf)
 > [[audio examples]](http://www.ta.chalmers.se/research/audio-technology-group/audio-examples/daga-2023a/)
